@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
+
 import { db } from "../db";
 import type { Post } from "../types/type";
+import { Link } from "react-router";
+import { usePosts } from "../hooks/usePosts";
 
 export default function FeedPage() {
-  const posts = useLiveQuery(() =>
-    db.posts.orderBy("createdAt").reverse().toArray()
-  );
+  const posts = usePosts();
 
   const [content, setContent] = useState("");
 
@@ -29,9 +29,9 @@ export default function FeedPage() {
       <header className="sticky top-0 bg-white border-b shadow-sm z-10">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
           <h1 className="text-xl font-bold text-emerald-700">Àṣàfé Feed</h1>
-          <a href="/" className="text-sm text-emerald-600 hover:underline">
+          <Link to="/" className="text-sm text-emerald-600 hover:underline">
             ← Home
-          </a>
+          </Link>
         </div>
       </header>
 

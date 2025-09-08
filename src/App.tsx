@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 import FeedPage from "./pages/Feed";
 import Home from "./pages/Home";
 import AppLayOut from "./components/AppLayOut";
+import { useEffect, useState } from "react";
 
 const router = createBrowserRouter([
   {
@@ -21,5 +22,28 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  const [online, setOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+  return (
+    <div className="min-h-screen flex flex-col">
+      {!online && (
+        <div className="bg-yellow-500 text-black text-center py-2">
+          ⚠️ You’re offline. Posts are loaded from your device.
+        </div>
+      )}
+      <RouterProvider router={router} />;
+    </div>
+  );
 }
