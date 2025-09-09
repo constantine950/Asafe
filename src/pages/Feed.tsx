@@ -1,13 +1,12 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import { db } from "../db";
 import type { Post } from "../types/type";
 import { Link } from "react-router";
 import { usePosts } from "../hooks/usePosts";
+import { syncPosts } from "../sync";
 
 export default function FeedPage() {
   const posts = usePosts();
-
   const [content, setContent] = useState("");
 
   const addPost = async (e: React.FormEvent) => {
@@ -21,7 +20,18 @@ export default function FeedPage() {
     });
 
     setContent("");
+    await syncPosts(); // 🚀 Try to sync immediately if online
   };
+
+  // Auto-sync in background whenever app is online
+  useEffect(() => {
+    const handleOnline = () => {
+      syncPosts();
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
 
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
@@ -75,7 +85,7 @@ export default function FeedPage() {
               <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
                 <span>{new Date(post.createdAt).toLocaleString()}</span>
                 {!post.synced && (
-                  <span className="text-amber-600">Offline</span>
+                  <span className="text-amber-600">⏳ Pending</span>
                 )}
               </div>
             </article>

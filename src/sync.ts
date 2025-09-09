@@ -1,18 +1,24 @@
 import { db } from "./db";
+import { supabase } from "./lib/supabase";
 import { type Post } from "./types/type";
 
-// Example: replace with Supabase or CouchDB API
 async function pushToServer(post: Post) {
-  const res = await fetch("/api/sync", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(post),
-  });
-  return res.ok;
+  const { error } = await supabase.from("posts").insert([
+    {
+      content: post.content,
+      created_at: new Date(post.createdAt).toISOString(),
+    },
+  ]);
+
+  if (error) {
+    console.error("❌ Sync failed:", error.message);
+    return false;
+  }
+  return true;
 }
 
 export async function syncPosts() {
-  const unsynced = await db.posts.filter((p) => !p.synced).toArray(); // 👈 works with boolean
+  const unsynced = await db.posts.filter((p) => !p.synced).toArray();
   for (const post of unsynced) {
     const success = await pushToServer(post);
     if (success) {
