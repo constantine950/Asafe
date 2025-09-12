@@ -4,6 +4,7 @@ import type { Post } from "../types/type";
 import { Link } from "react-router";
 import { syncPosts } from "../sync";
 import { useMergedPosts } from "../hooks/useMergedPosts";
+import { supabase } from "../lib/supabase";
 
 export default function FeedPage() {
   const posts = useMergedPosts();
@@ -13,10 +14,19 @@ export default function FeedPage() {
     e.preventDefault();
     if (!content.trim()) return;
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      alert("You must be logged in to post.");
+      return;
+    }
+
     await db.posts.add({
       content,
       createdAt: Date.now(),
       synced: false,
+      user_id: user.id, // ✅ track owner
     });
 
     setContent("");

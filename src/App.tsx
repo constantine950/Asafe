@@ -3,6 +3,7 @@ import FeedPage from "./pages/Feed";
 import Home from "./pages/Home";
 import AppLayOut from "./components/AppLayOut";
 import { useEffect, useState } from "react";
+import AuthPage from "./pages/AuthPage";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
       {
         path: "/feed",
         Component: FeedPage,
+      },
+      {
+        path: "/AuthPage",
+        Component: AuthPage,
       },
     ],
   },
