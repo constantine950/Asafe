@@ -1,6 +1,22 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { supabase } from "../lib/supabase";
 
 export default function Home() {
+  const navigate = useNavigate();
+
+  async function handleClick() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      alert("You must be logged in to post.");
+      navigate("/authpage");
+    } else {
+      navigate("/feed");
+      console.log("user logged in");
+    }
+  }
+
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 to-white">
       {/* Hero Section */}
@@ -13,12 +29,12 @@ export default function Home() {
           online, and stay connected even without internet.
         </p>
         <div className="mt-6 flex gap-4">
-          <Link
-            to="/feed"
+          <button
+            onClick={handleClick}
             className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition"
           >
             Enter App
-          </Link>
+          </button>
           <Link
             to="/about"
             className="px-6 py-3 border border-emerald-600 text-emerald-700 rounded-xl font-medium hover:bg-emerald-50 transition"

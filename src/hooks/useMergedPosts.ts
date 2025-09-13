@@ -35,22 +35,21 @@ export function useMergedPosts() {
     const fetchCloudPosts = async () => {
       const { data, error } = await supabase
         .from("posts")
-        .select("id, content, created_at")
+        .select("id, content, created_at, user_id, user_email")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("❌ Supabase fetch failed:", error.message);
-        return;
+      if (!error && data) {
+        setCloudPosts(
+          data.map((p) => ({
+            id: p.id,
+            content: p.content,
+            createdAt: new Date(p.created_at).getTime(),
+            synced: true,
+            user_id: p.user_id,
+            user_email: p.user_email ?? "Anonymous", // ✅ map email
+          }))
+        );
       }
-
-      setCloudPosts(
-        data.map((p) => ({
-          id: p.id,
-          content: p.content,
-          createdAt: new Date(p.created_at).getTime(),
-          synced: true,
-        }))
-      );
     };
 
     fetchCloudPosts();

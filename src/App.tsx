@@ -19,7 +19,7 @@ const router = createBrowserRouter([
         Component: FeedPage,
       },
       {
-        path: "/AuthPage",
+        path: "/authpage",
         Component: AuthPage,
       },
     ],

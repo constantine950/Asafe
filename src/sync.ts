@@ -8,6 +8,7 @@ async function pushToServer(post: Post) {
       content: post.content,
       created_at: new Date(post.createdAt).toISOString(),
       user_id: post.user_id,
+      user_email: post.user_email,
     },
   ]);
 

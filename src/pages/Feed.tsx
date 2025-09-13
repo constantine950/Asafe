@@ -27,15 +27,11 @@ export default function FeedPage() {
       createdAt: Date.now(),
       synced: false,
       user_id: user.id, // ✅ track owner
+      user_email: user.email,
     });
 
     setContent("");
     await syncPosts(); // 🚀 Try to sync immediately if online
-  };
-
-  const handleSync = async () => {
-    await syncPosts();
-    alert("🔄 Sync completed!");
   };
 
   // Auto-sync in background whenever app is online
@@ -55,12 +51,6 @@ export default function FeedPage() {
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
           <h1 className="text-xl font-bold text-emerald-700">Àṣàfé Feed</h1>
           <div className="flex items-center gap-4">
-            <button
-              onClick={handleSync}
-              className="text-sm text-white bg-emerald-600 px-3 py-1 rounded-md hover:bg-emerald-700 transition"
-            >
-              Sync Now
-            </button>
             <Link to="/" className="text-sm text-emerald-600 hover:underline">
               ← Home
             </Link>
@@ -105,11 +95,20 @@ export default function FeedPage() {
               className="bg-white shadow rounded-xl p-4 flex flex-col"
             >
               <p className="text-gray-800">{post.content}</p>
+
               <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
                 <span>{new Date(post.createdAt).toLocaleString()}</span>
-                {!post.synced && (
-                  <span className="text-amber-600">⏳ Pending</span>
-                )}
+
+                <div className="flex items-center gap-2">
+                  {post.user_email && (
+                    <span className="italic text-gray-600">
+                      by {post.user_email}
+                    </span>
+                  )}
+                  {!post.synced && (
+                    <span className="text-amber-600">⏳ Pending</span>
+                  )}
+                </div>
               </div>
             </article>
           ))

@@ -6,4 +6,5 @@ export interface Post {
   updatedAt?: number;
   synced: boolean;
   user_id?: string;
+  user_email?: string;
 }
