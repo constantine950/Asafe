@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import AppLayOut from "./components/AppLayOut";
 import { useEffect, useState } from "react";
 import AuthPage from "./pages/AuthPage";
+import ProfileSetupPage from "./pages/ProfileSetupPage";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
       {
         path: "/authpage",
         Component: AuthPage,
+      },
+      {
+        path: "/profile-setup",
+        Component: ProfileSetupPage,
       },
     ],
   },

@@ -17,7 +17,7 @@ export default function AuthPage() {
         password,
       });
       if (error) return alert(error.message);
-      navigate("/feed");
+      navigate("/profile-setup");
     } else {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) return alert(error.message);

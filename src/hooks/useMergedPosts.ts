@@ -35,7 +35,9 @@ export function useMergedPosts() {
     const fetchCloudPosts = async () => {
       const { data, error } = await supabase
         .from("posts")
-        .select("id, content, created_at, user_id, user_email")
+        .select(
+          "id, content, created_at, user_id, user_email, image_url, username"
+        )
         .order("created_at", { ascending: false });
 
       if (!error && data) {
@@ -47,6 +49,8 @@ export function useMergedPosts() {
             synced: true,
             user_id: p.user_id,
             user_email: p.user_email ?? "Anonymous", // ✅ map email
+            image_url: p.image_url,
+            username: p.username,
           }))
         );
       }

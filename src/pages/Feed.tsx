@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { syncPosts } from "../sync";
 import { useMergedPosts } from "../hooks/useMergedPosts";
 import { supabase } from "../lib/supabase";
+import TimeAgo from "../components/TimeAgo";
 
 export default function FeedPage() {
   const posts = useMergedPosts();
@@ -22,12 +23,20 @@ export default function FeedPage() {
       return;
     }
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, image_url")
+      .eq("id", user.id)
+      .single();
+
     await db.posts.add({
       content,
       createdAt: Date.now(),
       synced: false,
       user_id: user.id, // ✅ track owner
       user_email: user.email,
+      image_url: profile?.image_url,
+      username: profile?.username,
     });
 
     setContent("");
@@ -97,14 +106,20 @@ export default function FeedPage() {
               <p className="text-gray-800">{post.content}</p>
 
               <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
-                <span>{new Date(post.createdAt).toLocaleString()}</span>
+                <TimeAgo timestamp={post.createdAt} />
 
                 <div className="flex items-center gap-2">
-                  {post.user_email && (
-                    <span className="italic text-gray-600">
-                      by {post.user_email}
+                  <div className="flex items-center gap-2">
+                    {post.image_url && (
+                      <img
+                        src={post.image_url}
+                        className="w-6 h-6 rounded-full"
+                      />
+                    )}
+                    <span className="font-medium text-gray-700">
+                      {post.username}
                     </span>
-                  )}
+                  </div>
                   {!post.synced && (
                     <span className="text-amber-600">⏳ Pending</span>
                   )}
