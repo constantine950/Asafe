@@ -27,17 +27,17 @@ const TimeAgo = ({ timestamp }: TimeAgoProps) => {
   const months = differenceInMonths(now, date);
 
   if (minutes < 1) {
-    relative = "now";
+    relative = "just now";
   } else if (minutes < 60) {
-    relative = `${minutes}m`;
+    relative = `${minutes}m ago`;
   } else if (hours < 24) {
-    relative = `${hours}h`;
+    relative = `${hours}h ago`;
   } else if (days < 7) {
-    relative = `${days}d`;
+    relative = `${days}d ago`;
   } else if (weeks < 5) {
-    relative = `${weeks}w`;
+    relative = `${weeks}w ago`;
   } else if (months < 12) {
-    relative = `${months}mo`;
+    relative = `${months}mo ago`;
   } else {
     relative = format(date, "MMM d, yyyy");
   }
@@ -46,7 +46,7 @@ const TimeAgo = ({ timestamp }: TimeAgoProps) => {
 
   return (
     <span className="text-gray-500" title={absolute}>
-      {relative} ago
+      {relative}
     </span>
   );
 };
