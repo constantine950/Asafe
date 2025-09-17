@@ -14,3 +14,8 @@ export interface Post {
 export type TimeAgoProps = {
   timestamp: number; // ms since epoch
 };
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+}

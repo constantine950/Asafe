@@ -1,13 +1,16 @@
 import Dexie, { type Table } from "dexie";
-import { type Post } from "./types/type";
+import { type CurrentUser, type Post } from "./types/type";
 
 export class AsafeDB extends Dexie {
-  posts!: Table<Post>;
+  posts!: Table<Post, number>;
+  current_user!: Table<CurrentUser, string>;
 
   constructor() {
     super("AsafeDB");
     this.version(2).stores({
-      posts: "++id, createdAt, updatedAt, synced", // 👈 added `synced` as an index
+      posts:
+        "++id, content, createdAt, synced, user_id, user_email, username, image_url",
+      current_user: "id, email", // user id is primary key
     });
   }
 }

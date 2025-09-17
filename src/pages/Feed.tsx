@@ -13,13 +13,30 @@ export default function FeedPage() {
   const posts = useMergedPosts();
   const [content, setContent] = useState("");
   const [user, setUser] = useState<User | null>(null);
+  const [localUserId, setLocalUserId] = useState<string | null>(null);
 
   // Editing state
   const [editingId, setEditingId] = useState<number | undefined>(undefined);
   const [editContent, setEditContent] = useState("");
 
+  // Fetch online user and cache locally
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (data.user) {
+        setUser(data.user);
+
+        // Save in Dexie for offline use
+        await db.current_user.put({
+          id: data.user.id,
+          email: data.user.email!,
+        });
+        setLocalUserId(data.user.id);
+      } else {
+        // If offline, try Dexie fallback
+        const local = await db.current_user.toArray();
+        if (local.length > 0) setLocalUserId(local[0].id);
+      }
+    });
   }, []);
 
   const addPost = async (e: React.FormEvent) => {
@@ -44,22 +61,23 @@ export default function FeedPage() {
       content,
       createdAt: Date.now(),
       synced: false,
-      user_id: user.id,
+      user_id: user.id, // ✅ track owner
       user_email: user.email,
       image_url: profile?.image_url,
       username: profile?.username,
     });
 
     setContent("");
-    await syncPosts();
+    await syncPosts(); // 🚀 Try to sync immediately if online
   };
 
+  // Edit handlers
   function startEditing(post: Post) {
     setEditingId(post.id);
     setEditContent(post.content);
   }
 
-  async function handleSaveEdit(id: number | undefined) {
+  async function handleSaveEdit(id: number) {
     if (!editContent.trim()) return;
     await db.posts.update(id, { content: editContent, synced: false });
     setEditingId(undefined);
@@ -67,14 +85,19 @@ export default function FeedPage() {
     await syncPosts();
   }
 
-  async function handleDelete(id: number | undefined) {
+  // Delete handler
+  async function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this post?")) return;
     await db.posts.delete(id);
     await syncPosts();
   }
 
+  // Auto-sync in background whenever app is online
   useEffect(() => {
-    const handleOnline = () => syncPosts();
+    const handleOnline = () => {
+      syncPosts();
+    };
+
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
   }, []);
@@ -85,9 +108,11 @@ export default function FeedPage() {
       <header className="sticky top-0 bg-white border-b shadow-sm z-10">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
           <h1 className="text-xl font-bold text-emerald-700">Àṣàfé Feed</h1>
-          <Link to="/" className="text-sm text-emerald-600 hover:underline">
-            ← Home
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="text-sm text-emerald-600 hover:underline">
+              ← Home
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -131,12 +156,12 @@ export default function FeedPage() {
               key={post.id}
               className="bg-white shadow rounded-xl p-4 flex flex-col"
             >
-              {/* Header with avatar */}
+              {/* User header */}
               <div className="flex items-center gap-3 mb-2">
                 {post.image_url ? (
                   <img
                     src={post.image_url}
-                    alt={post.username || "user"}
+                    alt="avatar"
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
@@ -158,7 +183,7 @@ export default function FeedPage() {
                   />
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleSaveEdit(post.id)}
+                      onClick={() => handleSaveEdit(post.id!)}
                       className="px-3 py-1 bg-emerald-600 text-white rounded"
                     >
                       Save
@@ -178,12 +203,16 @@ export default function FeedPage() {
               {/* Footer */}
               <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
                 <TimeAgo timestamp={post.createdAt} />
+
                 <div className="flex items-center gap-3">
                   {!post.synced && (
                     <span className="text-amber-600">⏳ Pending</span>
                   )}
-                  {(user?.id === post.user_id && editingId !== post.id) ||
-                    (!navigator.onLine && (
+
+                  {/* Edit/Delete only if owner (online OR offline) */}
+                  {(user?.id === post.user_id ||
+                    localUserId === post.user_id) &&
+                    editingId !== post.id && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => startEditing(post)}
@@ -192,13 +221,13 @@ export default function FeedPage() {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(post.id)}
+                          onClick={() => handleDelete(post.id!)}
                           className="text-red-600 hover:underline"
                         >
                           Delete
                         </button>
                       </div>
-                    ))}
+                    )}
                 </div>
               </div>
             </article>
