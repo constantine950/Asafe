@@ -9,7 +9,7 @@ export class AsafeDB extends Dexie {
     super("AsafeDB");
     this.version(2).stores({
       posts:
-        "++id, content, createdAt, synced, user_id, user_email, username, image_url",
+        "++id, content, createdAt, synced, user_id, user_email, username, image_url, deleted",
       current_user: "id, email", // user id is primary key
     });
   }

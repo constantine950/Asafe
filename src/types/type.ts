@@ -5,6 +5,7 @@ export interface Post {
   createdAt: number;
   updatedAt?: number;
   synced: boolean;
+  deleted?: boolean;
   user_id?: string;
   user_email?: string;
   image_url?: string;

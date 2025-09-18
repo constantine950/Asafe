@@ -87,8 +87,11 @@ export default function FeedPage() {
 
   // Delete handler
   async function handleDelete(id: number) {
+    if (!id) return;
     if (!confirm("Are you sure you want to delete this post?")) return;
-    await db.posts.delete(id);
+
+    // mark as deleted
+    await db.posts.update(id, { deleted: true, synced: false });
     await syncPosts();
   }
 
