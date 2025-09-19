@@ -5,10 +5,7 @@ import type { Post } from "./types/type";
 async function pushToServer(post: Post) {
   if (post.deleted) {
     // 🔥 Handle delete
-    const { error } = await supabase
-      .from("posts")
-      .delete()
-      .eq("user_id", post.user_id);
+    const { error } = await supabase.from("posts").delete().eq("id", post.id);
 
     if (error) {
       console.error("❌ Delete failed:", error.message);
@@ -16,37 +13,33 @@ async function pushToServer(post: Post) {
     }
 
     // after successful delete, remove from Dexie
-    await db.posts.delete(post.id!);
+    await db.posts.delete(post.id);
     return true;
   }
 
-  // check if post already exists in Supabase
-  const { data: existingPost, error: selectError } = await supabase
+  // ✅ check Supabase by UUID
+  const { data: existingPost } = await supabase
     .from("posts")
-    .select("*")
-    .eq("user_id", post.user_id) // ✅ compare by post.id, not user_id
-    .single();
-
-  if (selectError && selectError.code !== "PGRST116") {
-    console.error("❌ Failed to check existing post:", selectError.message);
-    return false;
-  }
+    .select("id")
+    .eq("id", post.id)
+    .maybeSingle();
 
   if (existingPost) {
-    // update
     const { error } = await supabase
       .from("posts")
-      .update({ content: post.content })
-      .eq("user_id", post.user_id);
+      .update({
+        content: post.content,
+      })
+      .eq("id", post.id);
 
     if (error) {
       console.error("❌ Update failed:", error.message);
       return false;
     }
   } else {
-    // insert
     const { error } = await supabase.from("posts").insert([
       {
+        id: post.id, // ✅ same UUID
         content: post.content,
         created_at: new Date(post.createdAt).toISOString(),
         user_id: post.user_id,
@@ -67,10 +60,12 @@ async function pushToServer(post: Post) {
 export async function syncPosts() {
   const unsynced = await db.posts.filter((p) => !p.synced).toArray();
 
-  for (const post of unsynced) {
-    const success = await pushToServer(post);
-    if (success) {
-      await db.posts.update(post.id!, { synced: true });
-    }
-  }
+  await Promise.all(
+    unsynced.map(async (post) => {
+      const success = await pushToServer(post);
+      if (success) {
+        await db.posts.update(post.id!, { synced: true });
+      }
+    })
+  );
 }

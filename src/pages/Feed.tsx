@@ -8,6 +8,7 @@ import { syncPosts } from "../sync";
 import { useMergedPosts } from "../hooks/useMergedPosts";
 import { supabase } from "../lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import { v4 as uuidv4 } from "uuid";
 
 export default function FeedPage() {
   const posts = useMergedPosts();
@@ -16,7 +17,7 @@ export default function FeedPage() {
   const [localUserId, setLocalUserId] = useState<string | null>(null);
 
   // Editing state
-  const [editingId, setEditingId] = useState<number | undefined>(undefined);
+  const [editingId, setEditingId] = useState<string>("");
   const [editContent, setEditContent] = useState("");
 
   // Fetch online user and cache locally
@@ -25,10 +26,18 @@ export default function FeedPage() {
       if (data.user) {
         setUser(data.user);
 
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("username, image_url")
+          .eq("id", data.user.id)
+          .single();
+
         // Save in Dexie for offline use
         await db.current_user.put({
           id: data.user.id,
           email: data.user.email!,
+          username: prof?.username,
+          image_url: prof?.image_url,
         });
         setLocalUserId(data.user.id);
       } else {
@@ -43,32 +52,64 @@ export default function FeedPage() {
     e.preventDefault();
     if (!content.trim()) return;
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      alert("You must be logged in to post.");
+    let activeUser: User | null = null;
+    let profile: { username?: string; image_url?: string } | null = null;
+
+    try {
+      // Try online first
+      const { data } = await supabase.auth.getUser();
+      activeUser = data.user;
+
+      if (activeUser) {
+        // fetch profile from Supabase
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("username, image_url")
+          .eq("id", activeUser.id)
+          .single();
+        profile = prof;
+      }
+    } catch (err) {
+      console.log("Offline, falling back to Dexie user:", err);
+    }
+
+    // If offline, fallback to Dexie cached user
+    if (!activeUser && localUserId) {
+      const cachedUser = await db.current_user.get(localUserId);
+      if (cachedUser) {
+        activeUser = {
+          id: cachedUser.id,
+          email: cachedUser.email,
+        } as User;
+        profile = {
+          username: cachedUser.username,
+          image_url: cachedUser.image_url,
+        };
+      }
+    }
+
+    if (!activeUser) {
+      alert("⚠️ No user found. You must be logged in at least once.");
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username, image_url")
-      .eq("id", user.id)
-      .single();
-
     await db.posts.add({
+      id: uuidv4(),
       content,
       createdAt: Date.now(),
       synced: false,
-      user_id: user.id, // ✅ track owner
-      user_email: user.email,
+      user_id: activeUser.id,
+      user_email: activeUser.email!,
       image_url: profile?.image_url,
       username: profile?.username,
     });
 
     setContent("");
-    await syncPosts(); // 🚀 Try to sync immediately if online
+
+    // Only try sync if online
+    if (navigator.onLine) {
+      await syncPosts();
+    }
   };
 
   // Edit handlers
@@ -77,16 +118,16 @@ export default function FeedPage() {
     setEditContent(post.content);
   }
 
-  async function handleSaveEdit(id: number) {
+  async function handleSaveEdit(id: string) {
     if (!editContent.trim()) return;
     await db.posts.update(id, { content: editContent, synced: false });
-    setEditingId(undefined);
+    setEditingId("");
     setEditContent("");
     await syncPosts();
   }
 
   // Delete handler
-  async function handleDelete(id: number) {
+  async function handleDelete(id: string) {
     if (!id) return;
     if (!confirm("Are you sure you want to delete this post?")) return;
 
@@ -192,7 +233,7 @@ export default function FeedPage() {
                       Save
                     </button>
                     <button
-                      onClick={() => setEditingId(undefined)}
+                      onClick={() => setEditingId("")}
                       className="px-3 py-1 bg-gray-200 rounded"
                     >
                       Cancel

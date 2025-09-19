@@ -1,5 +1,5 @@
 export interface Post {
-  id?: number;
+  id: string;
   title?: string;
   content: string;
   createdAt: number;
@@ -19,4 +19,6 @@ export type TimeAgoProps = {
 export interface CurrentUser {
   id: string;
   email: string;
+  image_url: string;
+  username: string;
 }
