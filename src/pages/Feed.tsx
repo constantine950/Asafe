@@ -123,7 +123,9 @@ export default function FeedPage() {
     await db.posts.update(id, { content: editContent, synced: false });
     setEditingId("");
     setEditContent("");
-    await syncPosts();
+    if (navigator.onLine) {
+      await syncPosts();
+    }
   }
 
   // Delete handler
@@ -133,7 +135,9 @@ export default function FeedPage() {
 
     // mark as deleted
     await db.posts.update(id, { deleted: true, synced: false });
-    await syncPosts();
+    if (navigator.onLine) {
+      await syncPosts();
+    }
   }
 
   // Auto-sync in background whenever app is online
@@ -197,6 +201,7 @@ export default function FeedPage() {
         ) : (
           posts.map((post: Post) => (
             <article
+              title={post.deleted ? "Post deleted" : ""}
               key={post.id}
               className="bg-white shadow rounded-xl p-4 flex flex-col"
             >
@@ -256,7 +261,8 @@ export default function FeedPage() {
                   {/* Edit/Delete only if owner (online OR offline) */}
                   {(user?.id === post.user_id ||
                     localUserId === post.user_id) &&
-                    editingId !== post.id && (
+                    editingId !== post.id &&
+                    !post.deleted && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => startEditing(post)}
