@@ -255,7 +255,9 @@ export default function FeedPage() {
 
                 <div className="flex items-center gap-3">
                   {!post.synced && (
-                    <span className="text-amber-600">⏳ Pending</span>
+                    <span className="text-amber-600">
+                      {post.deleted ? "🔄️ Pending delete…" : "⏳ Pending"}
+                    </span>
                   )}
 
                   {/* Edit/Delete only if owner (online OR offline) */}
