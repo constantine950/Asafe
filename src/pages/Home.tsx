@@ -9,11 +9,9 @@ export default function Home() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      alert("You must be logged in to post.");
       navigate("/authpage");
     } else {
       navigate("/feed");
-      console.log("user logged in");
     }
   }
 

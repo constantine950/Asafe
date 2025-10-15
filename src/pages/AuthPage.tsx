@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router";
+import { signIn, signUp } from "../lib/supabaseQueries";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -12,15 +12,10 @@ export default function AuthPage() {
     e.preventDefault();
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) return alert(error.message);
+      signIn(email, password);
       navigate("/profile-setup");
     } else {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) return alert(error.message);
+      signUp(email, password);
       alert("✅ Account created, please log in!");
       setIsLogin(true);
     }

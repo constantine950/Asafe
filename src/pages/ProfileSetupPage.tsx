@@ -13,6 +13,7 @@ export default function ProfileSetupPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
     if (!user) return;
 
     const pic = `https://i.pravatar.cc/48?u=49947${Date.now()}`;
@@ -26,7 +27,7 @@ export default function ProfileSetupPage() {
 
     if (error) return alert(error.message);
 
-    navigate("/feed"); // 🎉 profile setup done
+    navigate("/feed");
   }
 
   return (

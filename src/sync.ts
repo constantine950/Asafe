@@ -4,7 +4,6 @@ import type { Post } from "./types/type";
 
 async function pushToServer(post: Post) {
   if (post.deleted) {
-    // 🔥 Handle delete
     const { error } = await supabase.from("posts").delete().eq("id", post.id);
 
     if (error) {
@@ -12,12 +11,10 @@ async function pushToServer(post: Post) {
       return false;
     }
 
-    // after successful delete, remove from Dexie
-    await db.posts.delete(post.id);
+    await db.posts.delete(post.id!);
     return true;
   }
 
-  // ✅ check Supabase by UUID
   const { data: existingPost } = await supabase
     .from("posts")
     .select("id")
@@ -39,9 +36,9 @@ async function pushToServer(post: Post) {
   } else {
     const { error } = await supabase.from("posts").insert([
       {
-        id: post.id, // ✅ same UUID
+        id: post.id,
         content: post.content,
-        created_at: new Date(post.createdAt).toISOString(),
+        created_at: new Date(post.createdAt!).toISOString(),
         user_id: post.user_id,
         user_email: post.user_email,
         image_url: post.image_url,

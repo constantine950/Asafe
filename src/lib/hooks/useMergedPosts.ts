@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db";
-import { supabase } from "../lib/supabase";
-import type { Post } from "../types/type";
+import { db } from "../../db";
+import type { Post } from "../../types/type";
+import { supabase } from "../supabase";
 
 export function useMergedPosts() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -48,7 +48,7 @@ export function useMergedPosts() {
             createdAt: new Date(p.created_at).getTime(),
             synced: true,
             user_id: p.user_id,
-            user_email: p.user_email ?? "Anonymous", // ✅ map email
+            user_email: p.user_email ?? "Anonymous",
             image_url: p.image_url,
             username: p.username,
           }))
@@ -83,5 +83,5 @@ export function useMergedPosts() {
     merged = localPosts;
   }
 
-  return merged.sort((a, b) => b.createdAt - a.createdAt);
+  return merged.sort((a, b) => b.createdAt! - a.createdAt!);
 }
